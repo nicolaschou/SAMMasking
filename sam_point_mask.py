@@ -32,6 +32,7 @@ import cv2
 import os
 import tkinter as tk
 from tkinter import filedialog
+import sys
 
 
 class ImageData:
@@ -120,7 +121,7 @@ def get_reference_points(
         f"({image_data.filename})"
     )
     
-    points = [] # stores keypoint coordinates
+    points = [] # stores reference point coordinates
     dots = [] # stores the Line2D dot objects
 
     # Mouse click callback
@@ -155,16 +156,18 @@ def get_reference_points(
                 fig.canvas.mpl_disconnect(cid_key)
                 plt.close(fig)
             else:
-                print("Please click a point first.\n")
+                print("Please click a point first.")
 
     # Connect the event handler and display the image
     cid_click = fig.canvas.mpl_connect('button_press_event', onclick)
     cid_key = fig.canvas.mpl_connect('key_press_event', onkey)
     plt.show()
 
-    # Wait until window is closed to return
-    while plt.fignum_exists(fig.number):
-        plt.pause(0.1)
+    if not points:
+        print("Plot closed before all points were selected. Exiting program.")
+        sys.exit(0)
+
+    # Scale points to original dimensions and return
     orig_points = np.array(points) / scale
     return orig_points
 
@@ -191,7 +194,7 @@ def generate_mask(
 
     Returns:
         ImageData: A new ImageData object containing the generated 
-        binary mask and prefixed filename
+                   mask and prefixed filename
     """
     # Generate mask (assumes all points are in foreground)
     predictor.set_image(image.image)
@@ -255,7 +258,7 @@ def mask_stack() -> list:
                 f"Prefix contains invalid filename characters: "
                 f"{''.join(invalid_chars)}. Try again.")
         elif file_prefix.strip() == "quit":
-            return
+            sys.exit(0)
         else:
             break
 
